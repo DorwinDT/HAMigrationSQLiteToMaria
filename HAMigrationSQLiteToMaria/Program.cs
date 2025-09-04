@@ -49,7 +49,7 @@ namespace HAMigrationSQLiteToMaria
 					using (var mysql = new MySqlConnection(opt.MySqlConn))
 					{
 						mysql.Open();
-
+						TruncateAllMariaTables(mysql);
 						// POZOR: Schému v MariaDB najprv nech vytvorí HA (prázdna DB -> pripojiť -> reštart),
 						// potom HA vypnúť a spustiť migráciu.
 
@@ -360,6 +360,47 @@ namespace HAMigrationSQLiteToMaria
 				return (val == null || val == DBNull.Value) ? 0 : Convert.ToInt64(val);
 			}
 		}
+
+		private static void TruncateAllMariaTables(MySqlConnection conn)
+		{
+			Console.WriteLine("Mazem obsah všetkých tabuliek v aktuálnej DB...");
+
+			using (var off = conn.CreateCommand())
+			{
+				off.CommandText = "SET FOREIGN_KEY_CHECKS=0;";
+				off.ExecuteNonQuery();
+			}
+
+			var tables = new List<string>();
+			using (var cmd = conn.CreateCommand())
+			{
+				cmd.CommandText = "SELECT table_name FROM information_schema.tables " +
+				                  "WHERE table_schema = DATABASE() AND table_type='BASE TABLE';";
+				using (var rd = cmd.ExecuteReader())
+				{
+					while (rd.Read()) tables.Add(rd.GetString(0));
+				}
+			}
+
+			foreach (var t in tables)
+			{
+				using (var cmd = conn.CreateCommand())
+				{
+					cmd.CommandText = "TRUNCATE TABLE " + Backtick(t) + ";";
+					cmd.ExecuteNonQuery();
+				}
+				Console.WriteLine("  TRUNCATE " + t);
+			}
+
+			using (var on = conn.CreateCommand())
+			{
+				on.CommandText = "SET FOREIGN_KEY_CHECKS=1;";
+				on.ExecuteNonQuery();
+			}
+
+			Console.WriteLine($"Hotovo, tabuľky vyčistené ({tables.Count}).");
+		}
+
 
 	}
 }
