@@ -1,0 +1,21 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="HAMigrationSQLiteToMaria.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="SqlitePath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\HA\home-assistant_v2.db</Value>
+    </Setting>
+    <Setting Name="MySqlConn" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Server=192.168.130.50;Port=3306;Database=homeassistant;User ID=ha;Password=super_tajne;SslMode=None;</Value>
+    </Setting>
+    <Setting Name="ChunkSize" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">5000</Value>
+    </Setting>
+    <Setting Name="Append" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="Tables" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+  </Settings>
+</SettingsFile>
