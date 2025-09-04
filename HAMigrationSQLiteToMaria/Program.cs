@@ -89,6 +89,8 @@ namespace HAMigrationSQLiteToMaria
 						{
 							Console.WriteLine();
 							Console.WriteLine("=== " + table + " ===");
+							long tableTotal = GetSqliteRowCount(sqlite, table);
+							Console.WriteLine("  Celkový počet riadkov v SQLite: " + tableTotal);
 
 							var srcCols = GetSqliteColumns(sqlite, table);
 							var dstCols = GetMySqlColumns(mysql, table);
@@ -157,19 +159,19 @@ namespace HAMigrationSQLiteToMaria
 											total += readCount;
 											offset += readCount;
 
-											Console.WriteLine("  + " + readCount + " (spolu " + total + ")");
+											Console.WriteLine("  + " + readCount + " (total transfered " + total + " / " + tableTotal + ")");
 											if (readCount < opt.ChunkSize) break;
 										}
 									}
 								}
 
-								Console.WriteLine("  Hotovo: " + table);
+								Console.WriteLine("  Done: " + table);
 							});
 						}
 
 						Console.WriteLine();
-						Console.WriteLine("== MIGRÁCIA DOKONČENÁ ==");
-						Console.WriteLine("Spusť HA a skontroluj Recorder/históriu.");
+						Console.WriteLine("== MIGRATION DONE ==");
+						Console.WriteLine("Run HA and check Recorder/history.");
 					}
 				}
 
@@ -177,7 +179,7 @@ namespace HAMigrationSQLiteToMaria
 			}
 			catch (Exception ex)
 			{
-				Console.Error.WriteLine("CHYBA: " + ex);
+				Console.Error.WriteLine("Error: " + ex);
 				return 1;
 			}
 		}
@@ -339,5 +341,16 @@ namespace HAMigrationSQLiteToMaria
 				}
 			}
 		}
+
+		private static long GetSqliteRowCount(SQLiteConnection conn, string table)
+		{
+			using (var cmd = conn.CreateCommand())
+			{
+				cmd.CommandText = "SELECT COUNT(*) FROM " + DoubleQuoteSqlite(table) + ";";
+				object val = cmd.ExecuteScalar();
+				return (val == null || val == DBNull.Value) ? 0 : Convert.ToInt64(val);
+			}
+		}
+
 	}
 }
