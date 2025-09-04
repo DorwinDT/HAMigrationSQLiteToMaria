@@ -1,11 +1,12 @@
-﻿using System;
+﻿using MySqlConnector;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SQLite;
 using System.Linq;
 using System.Text;
-using MySqlConnector;
 
 namespace HAMigrationSQLiteToMaria
 {
@@ -87,6 +88,8 @@ namespace HAMigrationSQLiteToMaria
 
 						foreach (var table in common)
 						{
+							var start = DateTime.UtcNow;
+
 							Console.WriteLine();
 							Console.WriteLine("=== " + table + " ===");
 							long tableTotal = GetSqliteRowCount(sqlite, table);
@@ -105,7 +108,6 @@ namespace HAMigrationSQLiteToMaria
 							}
 
 							Console.WriteLine("  Stĺpce: " + string.Join(", ", commonCols));
-
 							WithForeignKeysDisabled(mysql, delegate (MySqlConnection c)
 							{
 								long total = 0;
@@ -159,7 +161,14 @@ namespace HAMigrationSQLiteToMaria
 											total += readCount;
 											offset += readCount;
 
-											Console.WriteLine("  + " + readCount + " (total transfered " + total + " / " + tableTotal + ")");
+											var now = DateTime.UtcNow;
+											var elapsed = now - start;
+											var pct = tableTotal > 0 ? (total * 100.0 / tableTotal) : 0.0;
+											var speed = elapsed.TotalSeconds > 0 ? total / elapsed.TotalSeconds : 0; // rows/s
+											var remain = speed > 0 ? TimeSpan.FromSeconds((tableTotal - total) / speed) : TimeSpan.Zero;
+
+											Console.WriteLine($"  + {readCount} (total {total} / {tableTotal}, {pct:0.0}% | {speed:0} r/s | ETA {remain:hh\\:mm\\:ss})");
+
 											if (readCount < opt.ChunkSize) break;
 										}
 									}
